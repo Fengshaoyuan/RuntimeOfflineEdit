@@ -1,0 +1,22 @@
+   //添加底图图层
+        String strMapUrl="http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineCommunity/MapServer";
+        ArcGISTiledMapServiceLayer arcGISTiledMapServiceLayer = new ArcGISTiledMapServiceLayer(strMapUrl);
+        this.mMapView.addLayer(arcGISTiledMapServiceLayer);
+        //图层加载完初始化图层范围
+        this.mMapView.setOnStatusChangedListener(new OnStatusChangedListener() {
+            @Override
+            public void onStatusChanged(Object o, STATUS status) {
+
+                if(status == STATUS.INITIALIZED){
+                    Log.d(TAG,"初始化成功");
+                    //缩放到指定中心点与级别
+                    mMapView.centerAndZoom(28.671298,104.066404,5);
+                }else if(status == STATUS.LAYER_LOADED){
+                    Log.d(TAG,"图层加载成功");
+                }else if((status == STATUS.INITIALIZATION_FAILED)){
+                    Log.d(TAG,"初始化失败");
+                }else if((status == STATUS.LAYER_LOADING_FAILED)){
+                    Log.d(TAG,"/图层加载失败");
+                }
+            }
+        });

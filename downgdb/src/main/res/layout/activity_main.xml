@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.downgdb.MainActivity">
+
+    <!-- MapView -->
+    <com.esri.android.map.MapView
+        android:id="@+id/map"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        mapoptions.MapType="Topo"
+        mapoptions.ZoomLevel="5"
+        mapoptions.center="28.671298, 104.066404" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:id="@+id/linearLayout"
+        android:background="@color/primary_material_light">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/editTextGDBUrl"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_weight="1"
+            android:text="http://192.168.1.212:6080/arcgis/rest/services/testdata/FeatureServer"
+            android:inputType="textUri" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="数据下载"
+            android:id="@+id/btnDownGDB" />
+    </LinearLayout>
+
+
+</RelativeLayout>
