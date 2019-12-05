@@ -30,7 +30,7 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             android:layout_weight="1"
-            android:text="http://192.168.1.212:6080/arcgis/rest/services/testdata/FeatureServer"
+            android:text="http://www.qdydcl.com/xsyd/rest/services/test/FeatureServer"
             android:inputType="textUri" />
 
         <Button

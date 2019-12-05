@@ -25,7 +25,6 @@ import com.esri.core.tasks.geodatabase.GeodatabaseSyncTask;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,10 +49,10 @@ public class MainActivity extends AppCompatActivity {
 
         context = this;
         // 默认软键盘不弹出
-        getWindow().setSoftInputMode( WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        this.mMapView = (MapView)findViewById(R.id.map);
-        this.editTextDownGDBUrl = (EditText)findViewById(R.id.editTextGDBUrl);
+        this.mMapView = (MapView) findViewById(R.id.map);
+        this.editTextDownGDBUrl = (EditText) findViewById(R.id.editTextGDBUrl);
         //获取并设置在线服务地址
         this.onlineFeatureLayerUrl = this.editTextDownGDBUrl.getText().toString();
 
@@ -63,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         mProgressDialog.setTitle("正在创建离线地理数据库副本");
 
         //绑定按钮设置下载事件
-        btnDownGDB = (Button)this.findViewById(R.id.btnDownGDB);
+        btnDownGDB = (Button) this.findViewById(R.id.btnDownGDB);
         btnDownGDB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -79,8 +78,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-	 * Geodatabase文件存储路径
-	 */
+     * Geodatabase文件存储路径
+     */
     static String createGeodatabaseFilePath() {
         return Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "/RuntimeOfflineEdit"
                 + File.separator + "demo.geodatabase";
@@ -88,9 +87,12 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 下载离线地理数据库
+     *
      * @param url FeatureService服务地址
-     * 例如：http://192.168.1.212:6080/arcgis/rest/services/testdata/FeatureServer
-     * 支持ArcGIS for Server 10.2.1以上版本，必须开启FeatureServer要素同步功能
+     *            例如：http://192.168.1.212:6080/arcgis/rest/services/testdata/FeatureServer
+     *            http://www.qdydcl.com/xsyd/rest/services/Hosted/%E6%89%8B%E6%9C%BA%E6%B5%8B%E8%AF%95/FeatureServer
+     *            https://www.qdydcl.com/xsyd/rest/services/test/FeatureServer
+     *            支持ArcGIS for Server 10.2.1以上版本，必须开启FeatureServer要素同步功能
      */
     private void downloadData(String url) {
         Log.i(TAG, "Create GeoDatabase");
@@ -102,13 +104,17 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(Throwable arg0) {
-                Log.e(TAG, "获取FeatureServiceInfo失败");
+                Log.e(TAG, "获取FeatureServiceInfo失败" + arg0.toString());
+                mProgressDialog.dismiss();
             }
 
             @Override
             public void onCallback(FeatureServiceInfo fsInfo) {
                 if (fsInfo.isSyncEnabled()) {
                     createGeodatabase(fsInfo);
+                } else {
+                    mProgressDialog.dismiss();
+                    Log.e(TAG, "FeatureServiceInfo不可同步");
                 }
             }
         });
@@ -116,67 +122,74 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 根据FeatureServiceInfo信息创建离线地理数据库文件
+     *
      * @param featureServerInfo 服务参数信息
      */
     private void createGeodatabase(FeatureServiceInfo featureServerInfo) {
-        // 生成一个geodatabase设置参数
-        GenerateGeodatabaseParameters params = new GenerateGeodatabaseParameters(
-                featureServerInfo, mMapView.getMaxExtent(), mMapView.getSpatialReference());
+        try {
+            // 生成一个geodatabase设置参数
+            GenerateGeodatabaseParameters params = new GenerateGeodatabaseParameters(
+                    featureServerInfo, mMapView.getMaxExtent(), mMapView.getSpatialReference());
 
-        // 下载结果回调函数
-        CallbackListener<String> gdbResponseCallback = new CallbackListener<String>() {
-            @Override
-            public void onError(final Throwable e) {
-                Log.e(TAG, "创建geodatabase失败");
-                mProgressDialog.dismiss();
-            }
-
-            @Override
-            public void onCallback(String path) {
-                Log.i(TAG, "Geodatabase 路径: " + path);
-                mProgressDialog.dismiss();
-
-
-                // 创建一个geodatabase数据库
-                Geodatabase localGdb = null;
-                try {
-                    localGdb = new Geodatabase(path);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+            // 下载结果回调函数
+            CallbackListener<String> gdbResponseCallback = new CallbackListener<String>() {
+                @Override
+                public void onError(final Throwable e) {
+                    Log.e(TAG, "创建geodatabase失败");
+                    mProgressDialog.dismiss();
                 }
 
-                // 添加FeatureLayer到MapView中
-                if (localGdb != null) {
-                    for (GeodatabaseFeatureTable gdbFeatureTable : localGdb.getGeodatabaseTables()) {
-                        if (gdbFeatureTable.hasGeometry()){
-                            mMapView.addLayer(new FeatureLayer(gdbFeatureTable));
+                @Override
+                public void onCallback(String path) {
+                    Log.i(TAG, "Geodatabase 路径: " + path);
+                    mProgressDialog.dismiss();
+
+
+                    // 创建一个geodatabase数据库
+                    Geodatabase localGdb = null;
+                    try {
+                        localGdb = new Geodatabase(path);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+                    // 添加FeatureLayer到MapView中
+                    if (localGdb != null) {
+                        for (GeodatabaseFeatureTable gdbFeatureTable : localGdb.getGeodatabaseTables()) {
+                            if (gdbFeatureTable.hasGeometry()) {
+                                mMapView.addLayer(new FeatureLayer(gdbFeatureTable));
+                            }
                         }
                     }
                 }
-            }
-        };
+            };
 
-        // 下载状态回调函数
-        GeodatabaseStatusCallback statusCallback = new GeodatabaseStatusCallback() {
-            @Override
-            public void statusUpdated(final GeodatabaseStatusInfo status) {
-                final String progress = status.getStatus().toString();
-                //在UI线程更新下载状态
-                ((Activity)context).runOnUiThread(new Runnable(){
-                    @Override
-                    public void run() {
-                        mProgressDialog.setMessage("数据下载中，请稍后……");
-                    }
-                });
+            // 下载状态回调函数
+            GeodatabaseStatusCallback statusCallback = new GeodatabaseStatusCallback() {
+                @Override
+                public void statusUpdated(final GeodatabaseStatusInfo status) {
+                    final String progress = status.getStatus().toString();
+                    //在UI线程更新下载状态
+                    ((Activity) context).runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mProgressDialog.setMessage("数据下载中，请稍后……");
+                        }
+                    });
 
-            }
-        };
+                }
+            };
 
-        //设置离线地理数据库存储路径
-        localGdbFilePath = createGeodatabaseFilePath();
+            //设置离线地理数据库存储路径
+            localGdbFilePath = createGeodatabaseFilePath();
 
-        //执行下载Geodatabase数据库
-        gdbSyncTask.generateGeodatabase(params, localGdbFilePath, false, statusCallback, gdbResponseCallback);
+            //执行下载Geodatabase数据库
+            gdbSyncTask.generateGeodatabase(params, localGdbFilePath, false, statusCallback, gdbResponseCallback);
+
+        } catch (Exception e) {
+            e.getStackTrace();
+            e.printStackTrace();
+        }
     }
 
 //    /**
